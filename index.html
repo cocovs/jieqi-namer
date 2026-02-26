@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>节气起名器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 480px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="date"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="date"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .date-inputs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .date-inputs input {
+            flex: 1;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 24px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .result-name {
+            font-size: 48px;
+            font-weight: 700;
+            color: #333;
+            text-align: center;
+            margin: 16px 0;
+            letter-spacing: 8px;
+        }
+
+        .result-detail {
+            text-align: center;
+            color: #667eea;
+            font-size: 15px;
+            margin-top: 12px;
+        }
+
+        .jieqi-info {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 13px;
+            color: #888;
+            text-align: center;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌸 节气起名器</h1>
+        <p class="subtitle">输入姓氏和生日，获取你的专属节气名</p>
+
+        <div class="input-group">
+            <label for="surname">姓氏</label>
+            <input type="text" id="surname" placeholder="请输入姓氏" maxlength="2">
+        </div>
+
+        <div class="input-group">
+            <label>出生日期（阳历）</label>
+            <div class="date-inputs">
+                <input type="number" id="month" placeholder="月" min="1" max="12">
+                <input type="number" id="day" placeholder="日" min="1" max="31">
+            </div>
+        </div>
+
+        <button onclick="generateName()">生成节气名</button>
+
+        <div class="result" id="result">
+            <div class="result-label">你的专属节气名</div>
+            <div class="result-name" id="resultName"></div>
+            <div class="result-detail" id="resultDetail"></div>
+            <div class="jieqi-info" id="jieqiInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        // 二十四节气数据（公历日期，格式：月-日）
+        const jieqiList = [
+            { name: '小寒', month: 1, day: 6, desc: '月初寒尚小，故云。月半则大矣。' },
+            { name: '大寒', month: 1, day: 20, desc: '寒气之逆极，故谓大寒。' },
+            { name: '立春', month: 2, day: 4, desc: '立，始建也，春气始而建立也。' },
+            { name: '雨水', month: 2, day: 19, desc: '正月中，天一生水，春始属木，然生木者必水也。' },
+            { name: '惊蛰', month: 3, day: 6, desc: '二月节，万物出乎震，震为雷，故曰惊蛰。' },
+            { name: '春分', month: 3, day: 21, desc: '二月中，分者半也，此当九十日之半，故谓之分。' },
+            { name: '清明', month: 4, day: 5, desc: '三月节，物至此时，皆以洁齐而清明矣。' },
+            { name: '谷雨', month: 4, day: 20, desc: '三月中，自雨水后，土膏脉动，今又雨其谷于水也。' },
+            { name: '立夏', month: 5, day: 6, desc: '四月节，立，建始也，夏，假也，物至此时皆假大也。' },
+            { name: '小满', month: 5, day: 21, desc: '四月中，小满者，物至于此小得盈满。' },
+            { name: '芒种', month: 6, day: 6, desc: '五月节，谓有芒之种谷可稼种矣。' },
+            { name: '夏至', month: 6, day: 21, desc: '五月中，夏，假也，至，极也，万物于此皆假大而至极也。' },
+            { name: '小暑', month: 7, day: 7, desc: '六月节，暑，热也，就热之中分为大小，月初为小。' },
+            { name: '大暑', month: 7, day: 23, desc: '六月中，暑，热也，月中为大。' },
+            { name: '立秋', month: 8, day: 8, desc: '七月节，立，建始也，秋，揪也，物于此而揪敛也。' },
+            { name: '处暑', month: 8, day: 23, desc: '七月中，处，止也，暑气至此而止矣。' },
+            { name: '白露', month: 9, day: 8, desc: '八月节，阴气渐重，露凝而白也。' },
+            { name: '秋分', month: 9, day: 23, desc: '八月中，解见春分。' },
+            { name: '寒露', month: 10, day: 8, desc: '九月节，露气寒冷，将凝结也。' },
+            { name: '霜降', month: 10, day: 23, desc: '九月中，气肃而凝，露结为霜矣。' },
+            { name: '立冬', month: 11, day: 7, desc: '十月节，立，建始也，冬，终也，万物收藏也。' },
+            { name: '小雪', month: 11, day: 22, desc: '十月中，雨下而为寒气所薄，故凝而为雪。' },
+            { name: '大雪', month: 12, day: 7, desc: '十一月节，至此而雪盛也。' },
+            { name: '冬至', month: 12, day: 22, desc: '十一月中，终藏之气，至此而极也。' }
+        ];
+
+        function generateName() {
+            const surname = document.getElementById('surname').value.trim();
+            const month = parseInt(document.getElementById('month').value);
+            const day = parseInt(document.getElementById('day').value);
+
+            // 验证输入
+            if (!surname) {
+                alert('请输入姓氏');
+                return;
+            }
+            if (!month || month < 1 || month > 12) {
+                alert('请输入有效的月份（1-12）');
+                return;
+            }
+            if (!day || day < 1 || day > 31) {
+                alert('请输入有效的日期');
+                return;
+            }
+
+            // 计算距离最近的节气
+            const nearestJieqi = findNearestJieqi(month, day);
+            
+            // 显示结果
+            const fullName = surname + nearestJieqi.name;
+            document.getElementById('resultName').textContent = fullName;
+            document.getElementById('resultDetail').textContent = 
+                `距离你最近的节气：${nearestJieqi.month}月${nearestJieqi.day}日 ${nearestJieqi.name}`;
+            document.getElementById('jieqiInfo').textContent = nearestJieqi.desc;
+            document.getElementById('result').classList.add('show');
+        }
+
+        function findNearestJieqi(month, day) {
+            // 将日期转换为一年中的第几天（简化计算）
+            const daysInMonth = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            const inputDayOfYear = daysInMonth.slice(0, month).reduce((a, b) => a + b, 0) + day;
+
+            let nearest = jieqiList[0];
+            let minDiff = Infinity;
+
+            for (const jieqi of jieqiList) {
+                const jieqiDayOfYear = daysInMonth.slice(0, jieqi.month).reduce((a, b) => a + b, 0) + jieqi.day;
+                
+                // 计算距离（考虑跨年情况）
+                let diff = Math.abs(inputDayOfYear - jieqiDayOfYear);
+                
+                // 处理跨年情况（比如1月3日距离去年冬至）
+                const crossYearDiff = 365 - diff;
+                if (crossYearDiff < diff) {
+                    diff = crossYearDiff;
+                }
+
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    nearest = jieqi;
+                }
+            }
+
+            return nearest;
+        }
+
+        // 回车键触发
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                generateName();
+            }
+        });
+    </script>
+</body>
+</html>
